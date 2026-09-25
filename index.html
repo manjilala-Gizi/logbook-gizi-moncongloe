@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Logbook Gizi Moncongloe</title>
+<meta name="theme-color" content="#0b2545">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --navy:#0b2545; --navy2:#13315c; --oranye:#f39c12; --hijau:#43a047; --ra:#ef9b1f;
+  --biru:#1e88c7; --biru-muda:#dbe9f6; --merah:#d93025; --abu:#f1f3f6; --garis:#dde2ea;
+  --teks:#1f2937; --redup:#6b7280; --putih:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--abu);color:var(--teks);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--biru)}
+
+/* Header */
+header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top)}
+.atas{display:flex;align-items:center;gap:10px;padding:10px 16px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.5px}
+.logo img{width:30px;height:30px;border-radius:7px}
+.logo small{display:block;font-weight:400;font-size:11px;opacity:.75;letter-spacing:0}
+.sp{flex:1}
+#badge{font-size:12px;padding:3px 9px;border-radius:12px;background:rgba(255,255,255,.14);white-space:nowrap;display:none;cursor:pointer}
+#badge.gagal{background:var(--merah)}
+#badge.antre{background:var(--oranye);color:#1b1b1b}
+nav{display:flex;overflow-x:auto;background:var(--navy2)}
+nav button{flex:1;min-width:88px;background:none;border:0;color:#cfd8e6;padding:11px 8px;font-size:14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button.aktif{color:#fff;border-bottom-color:var(--oranye);font-weight:600}
+
+main{max-width:1100px;margin:0 auto;padding:14px 12px 90px}
+.judul-hal{font-size:19px;font-weight:600;margin:4px 4px 12px}
+.kartu{background:#fff;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);border-top:3px solid var(--biru);padding:14px;margin-bottom:14px}
+.kartu.polos{border-top-color:var(--navy)}
+.baris-filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.baris-filter>*{flex:1 1 200px}
+label.lbl{display:block;font-size:13px;color:var(--redup);margin:10px 0 4px}
+input[type=text],input[type=url],input[type=date],input[type=month],input[type=search],input[type=password],select,textarea{width:100%;padding:9px 10px;border:1px solid #c9d1dc;border-radius:4px;background:#fff}
+textarea{min-height:78px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #9cc7ea;border-color:var(--biru)}
+.wajib{color:var(--merah)}
+.catatan-kecil{font-size:12.5px;color:var(--redup)}
+.merah{color:var(--merah)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:4px;padding:9px 16px;font-weight:600;cursor:pointer;background:#e5e9ef;color:var(--teks)}
+.btn.hijau{background:var(--hijau);color:#fff}
+.btn.merah{background:var(--merah);color:#fff}
+.btn.biru{background:var(--biru);color:#fff}
+.btn.navy{background:var(--navy);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.kecil{padding:5px 10px;font-size:13px}
+.ikon-btn{width:30px;height:30px;border:0;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1}
+.ikon-btn.tambah{background:#48b0dc;font-size:20px;font-weight:700}
+.ikon-btn.edit{background:var(--biru)}
+.ikon-btn.hapus{background:var(--merah)}
+
+/* Daftar RA (mirip tabel e-Kinerja) */
+table{border-collapse:collapse;width:100%}
+.tabel th{background:#f7f9fb;font-size:12.5px;text-transform:uppercase;color:#374151;letter-spacing:.3px;font-weight:700;padding:10px 8px;border:1px solid var(--garis);text-align:center}
+.tabel td{border:1px solid var(--garis);padding:9px 8px;vertical-align:top}
+.tabel td.tengah{text-align:center}
+.ra-teks{color:#374151}
+.rincian-link{color:var(--biru);cursor:pointer;white-space:nowrap;font-size:13.5px}
+.detail-ra{margin-top:6px;font-size:13px;background:#f7f9fb;border-left:3px solid var(--hijau);padding:6px 8px;display:none}
+.detail-ra.buka{display:block}
+.label-rhk{font-size:12px;color:var(--redup)}
+.nonaktif{opacity:.6}
+.kosong{text-align:center;color:var(--redup);padding:24px 8px}
+
+/* Modal */
+.modal-latar{position:fixed;inset:0;background:rgba(10,20,35,.55);z-index:50;display:none;overflow-y:auto;padding:12px 8px}
+.modal-latar.buka{display:block}
+.modal{background:#fff;max-width:1080px;margin:0 auto;border-radius:6px;padding-bottom:14px}
+.modal h2{font-weight:400;text-align:center;font-size:22px;color:#444;margin:0;padding:16px 12px;border-bottom:1px solid #eee}
+.pita{display:grid;grid-template-columns:52px 12px 1fr;color:#fff;font-weight:700;font-size:14px;padding:9px 10px;margin:0 12px}
+.pita.rhk{background:var(--hijau);margin-top:14px}
+.pita.ra{background:var(--ra)}
+.pita .info{grid-column:3;font-weight:400;font-size:12.5px;opacity:.95;margin-top:2px}
+.isi-modal{padding:4px 12px}
+.form-grid{display:grid;grid-template-columns:230px 1fr;gap:10px 16px;align-items:start;margin-top:14px}
+.form-grid>label{padding-top:9px;color:#555;font-size:14px}
+.tgl-baris{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tgl-baris input{max-width:220px}
+.aksi-form{text-align:center;margin:18px 0 8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pilih-ra{margin:14px 12px 0}
+.riwayat{margin:14px 12px 0;overflow-x:auto}
+.riwayat th{background:var(--biru-muda)}
+.riwayat td{font-size:14px}
+.nowrap{white-space:nowrap}
+.tanda-edit{background:#fff7e0;border:1px solid #f5d27a;border-radius:4px;padding:6px 10px;font-size:13px;margin-top:12px}
+
+/* Harian */
+.nav-tgl{display:flex;gap:8px;align-items:center}
+.nav-tgl input{flex:1}
+.hari-label{font-weight:600;margin:10px 2px 8px}
+.slot-tetap td{background:#fff9c4;font-weight:600;text-align:center}
+.entri{border-bottom:1px dashed #e3e7ee;padding:4px 0 6px;display:flex;gap:8px;align-items:flex-start}
+.entri:last-child{border-bottom:0}
+.entri .isi{flex:1}
+.entri .ra-kecil{font-size:12px;color:var(--redup);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.link-bukti{font-size:12.5px;word-break:break-all}
+
+/* Cetak */
+.grid-hari{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:10px}
+.grid-hari .kepala{font-size:11.5px;text-align:center;color:var(--redup);font-weight:600}
+.sel-hari{border:1px solid var(--garis);border-radius:4px;padding:4px 2px;text-align:center;font-size:13px;background:#fff;cursor:pointer;min-height:44px}
+.sel-hari b{display:block}
+.sel-hari .n{font-size:11px;color:var(--redup)}
+.sel-hari.ada{background:#e3f4e4;border-color:#9bd09e}
+.sel-hari.libur b{color:var(--merah)}
+.sel-hari.kosong-sel{visibility:hidden}
+.ringkas{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.ringkas div{background:#f7f9fb;border:1px solid var(--garis);border-radius:4px;padding:6px 10px;font-size:13px}
+.ringkas b{font-size:17px;display:block}
+
+.baris-tombol{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.status-sinkron{font-size:13px;margin-top:10px;padding:8px 10px;border-radius:4px;background:#f7f9fb;border:1px solid var(--garis)}
+.status-sinkron.gagal{background:#fdecea;border-color:#f5c2bd}
+.status-sinkron.ok{background:#e8f5e9;border-color:#b7dfb9}
+
+#pemberitahuan{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:6px;z-index:90;font-size:14px;max-width:90vw;display:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#pembaruan{display:none;background:var(--oranye);color:#1b1b1b;padding:8px 16px;font-size:14px;text-align:center}
+#pembaruan button{margin-left:8px}
+.sembunyi{display:none!important}
+
+@media (max-width:720px){
+  .form-grid{grid-template-columns:1fr;gap:2px}
+  .form-grid>label{padding-top:8px}
+  .pita{grid-template-columns:40px 10px 1fr;font-size:13px;margin:0 8px}
+  .isi-modal,.riwayat,.pilih-ra{margin-left:8px;margin-right:8px;padding-left:0;padding-right:0}
+  .modal h2{font-size:18px}
+  /* tabel RA jadi kartu */
+  .tabel-ra thead{display:none}
+  .tabel-ra tr{display:grid;grid-template-columns:34px 1fr 42px;border:1px solid var(--garis);border-radius:5px;margin-bottom:8px;background:#fff}
+  .tabel-ra td{border:0;padding:8px 6px}
+  .tabel-ra td.no{grid-row:1/3}
+  .tabel-ra td.waktu{grid-column:2;padding-top:0;font-size:12.5px;color:var(--redup);text-align:left}
+  .tabel-ra td.jml{grid-column:2;padding-top:0;font-size:12.5px;text-align:left}
+  .tabel-ra td.aksi{grid-column:3;grid-row:1/4;display:flex;align-items:center;justify-content:center}
+  .tabel-harian th:first-child,.tabel-harian td:first-child{display:none}
+  .tabel-harian th,.tabel-harian td{padding:7px 5px;font-size:14px}
+  .tabel-harian th:nth-child(2){width:62px!important}
+  .tabel-harian th:last-child{width:40px!important}
+  .tabel-harian td:nth-child(2){white-space:normal;font-size:12.5px}
+  .tabel-ra td.waktu::before{content:"Waktu: "}
+  .tabel-ra td.jml::before{content:"Jumlah catatan: "}
+}
+</style>
+</head>
+<body>
+<div id="pembaruan">Versi baru aplikasi tersedia. <button class="btn kecil navy" id="btnMuatUlang">Muat ulang</button></div>
+<header>
+  <div class="atas">
+    <div class="logo"><img src="icon-192.png" alt=""><div>LOGBOOK GIZI<small>UPTD Puskesmas Moncongloe</small></div></div>
+    <div class="sp"></div>
+    <span id="badge" title="Status sinkron"></span>
+  </div>
+  <nav id="menu">
+    <button data-hal="ra" class="aktif">Rencana Aksi</button>
+    <button data-hal="harian">Harian</button>
+    <button data-hal="cetak">Cetak Excel</button>
+    <button data-hal="atur">Pengaturan</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ RENCANA AKSI ============ -->
+  <section id="hal-ra">
+    <div class="judul-hal">Daftar Catatan Harian</div>
+    <div id="sapaanAtur" class="kartu polos sembunyi">
+      Identitas petugas belum diisi. Buka <a href="#" data-ke="atur">Pengaturan</a> untuk mengisi Nama, NIP, Pangkat/Gol, dan Jabatan (dipakai di kop Excel).
+    </div>
+    <div class="kartu polos">
+      <div class="baris-filter">
+        <select id="filterRA">
+          <option value="semua">Semua Rencana Aksi</option>
+          <option value="bulan">Hanya yang dijadwalkan bulan ini</option>
+        </select>
+        <input type="search" id="cariRA" placeholder="Pencarian…">
+      </div>
+    </div>
+    <div class="kartu">
+      <table class="tabel tabel-ra">
+        <thead><tr><th style="width:48px">No.</th><th>Rencana Aksi</th><th style="width:170px">Waktu Pelaksanaan</th><th style="width:100px">Jumlah Catatan</th><th style="width:84px">Tindakan</th></tr></thead>
+        <tbody id="isiRA"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ HARIAN ============ -->
+  <section id="hal-harian" class="sembunyi">
+    <div class="judul-hal">Logbook per Hari</div>
+    <div class="kartu polos">
+      <div class="nav-tgl">
+        <button class="btn" id="tglMundur" aria-label="Hari sebelumnya">‹</button>
+        <input type="date" id="tglHarian">
+        <button class="btn" id="tglMaju" aria-label="Hari berikutnya">›</button>
+      </div>
+      <div class="hari-label" id="labelHarian"></div>
+      <div style="overflow-x:auto">
+        <table class="tabel tabel-harian">
+          <thead><tr><th style="width:40px">No</th><th style="width:108px">Jam</th><th>Kegiatan (Rincian · Realisasi · Link)</th><th style="width:50px"></th></tr></thead>
+          <tbody id="isiHarian"></tbody>
+        </table>
+      </div>
+      <p class="catatan-kecil">Baris kuning terisi otomatis di Excel. Tekan <b>+</b> pada slot jam untuk menambah kegiatan langsung dari sini.</p>
+    </div>
+  </section>
+
+  <!-- ============ CETAK ============ -->
+  <section id="hal-cetak" class="sembunyi">
+    <div class="judul-hal">Cetak Logbook Bulanan (Excel)</div>
+    <div class="kartu">
+      <label class="lbl" for="bulanCetak">Bulan</label>
+      <input type="month" id="bulanCetak" style="max-width:240px">
+      <div class="ringkas" id="ringkasBulan"></div>
+      <div class="grid-hari" id="gridHari"></div>
+      <p class="catatan-kecil">Hijau = ada catatan. Ketuk tanggal untuk membuka logbook hari itu. Semua tanggal tetap dibuat sheet-nya; hari tanpa catatan menjadi sheet kosong.</p>
+      <div class="baris-tombol">
+        <button class="btn hijau" id="btnUnduhExcel">⬇ Unduh Excel bulan ini</button>
+      </div>
+      <p class="catatan-kecil" id="infoCetak"></p>
+    </div>
+  </section>
+
+  <!-- ============ PENGATURAN ============ -->
+  <section id="hal-atur" class="sembunyi">
+    <div class="judul-hal">Pengaturan</div>
+    <div class="kartu">
+      <b>Identitas petugas</b> <span class="catatan-kecil">(untuk kop Excel)</span>
+      <label class="lbl" for="aNama">Nama</label><input type="text" id="aNama" placeholder="Nama lengkap dan gelar">
+      <label class="lbl" for="aNip">NIP</label><input type="text" id="aNip" inputmode="numeric">
+      <label class="lbl" for="aPangkat">Pangkat/Gol</label><input type="text" id="aPangkat" placeholder="contoh: Pembina / IV.a">
+      <label class="lbl" for="aJabatan">Jabatan</label><input type="text" id="aJabatan" placeholder="contoh: Nutrisionis Ahli Madya">
+      <div class="baris-tombol"><button class="btn hijau" id="btnSimpanProfil">Simpan identitas</button></div>
+    </div>
+
+    <div class="kartu">
+      <b>Sinkronisasi Google Sheet</b>
+      <label class="lbl" for="aUrl">Alamat Web App (berakhiran /exec)</label><input type="url" id="aUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <label class="lbl" for="aKode">Kode akses</label><input type="password" id="aKode" autocomplete="off">
+      <div class="baris-tombol">
+        <button class="btn biru" id="btnUji">Uji &amp; aktifkan</button>
+        <button class="btn" id="btnSinkron">Sinkron sekarang</button>
+      </div>
+      <div class="status-sinkron" id="statusSinkron"></div>
+    </div>
+
+    <div class="kartu">
+      <b>Master Rencana Aksi</b>
+      <p class="catatan-kecil" id="infoMaster"></p>
+      <p class="catatan-kecil">Tambah atau ubah RA langsung di tab <b>Master_RA</b> Google Sheet. Perubahan masuk ke aplikasi saat sinkron berikutnya.</p>
+    </div>
+
+    <div class="kartu">
+      <b>Cadangan data</b>
+      <p class="catatan-kecil">Simpan cadangan secara berkala (misalnya tiap minggu), terutama bila sinkron belum diaktifkan.</p>
+      <div class="baris-tombol">
+        <button class="btn" id="btnCadangan">Simpan cadangan</button>
+        <button class="btn" id="btnPulihkan">Pulihkan dari file</button>
+        <input type="file" id="filePulihkan" accept=".json,application/json" class="sembunyi">
+      </div>
+    </div>
+    <p class="catatan-kecil" style="text-align:center" id="infoVersi"></p>
+  </section>
+</main>
+
+<!-- ============ MODAL TAMBAH CATATAN ============ -->
+<div class="modal-latar" id="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="judulModal">
+    <h2 id="judulModal">Tambah Catatan Kegiatan Harian</h2>
+    <div class="pilih-ra sembunyi" id="wadahPilihRA">
+      <label class="lbl" for="pilihRA">Pilih Rencana Aksi <span class="wajib">*</span></label>
+      <select id="pilihRA"></select>
+    </div>
+    <div class="pita rhk"><span>RHK</span><span>:</span><span id="mRHK"></span></div>
+    <div class="pita ra"><span>RA</span><span>:</span><span id="mRA"></span><span class="info" id="mInfo"></span></div>
+    <div class="isi-modal">
+      <div id="tandaEdit" class="tanda-edit sembunyi">Sedang mengubah catatan. <a href="#" id="batalEdit">Batal ubah</a></div>
+      <div class="form-grid">
+        <label for="fTgl">Waktu Pelaksanaan</label>
+        <div class="tgl-baris"><input type="date" id="fTgl"><span class="catatan-kecil merah">(boleh diisi mundur)</span></div>
+        <label for="fSlot">Jam <span class="wajib">(*)</span></label>
+        <div><select id="fSlot"></select><div class="catatan-kecil" id="infoSlot"></div></div>
+        <label for="fRincian">Rincian Kegiatan Harian <span class="wajib">(*)</span></label>
+        <textarea id="fRincian" placeholder="Rincian Kegiatan Harian ……………"></textarea>
+        <label for="fRealisasi">Realisasi</label>
+        <input type="text" id="fRealisasi" placeholder="contoh: 104 Data, 1 Dokumen, 25 Balita">
+        <label for="fLink">Tautan Dokumen Pendukung <span class="merah">(Jika Ada)</span></label>
+        <input type="url" id="fLink" placeholder="https://drive.google.com/…">
+      </div>
+      <div class="aksi-form">
+        <button class="btn hijau" id="btnSimpan">💾 Simpan</button>
+        <button class="btn merah" id="btnTutup">✖ Tutup</button>
+      </div>
+    </div>
+    <div class="riwayat">
+      <table class="tabel">
+        <thead><tr><th style="width:42px">No.</th><th style="width:120px">Tanggal</th><th style="width:100px">Jam</th><th>Rincian Kegiatan Harian</th><th style="width:130px">Realisasi</th><th style="width:150px">Tautan Dokumen Pendukung</th><th style="width:86px">Tindakan</th></tr></thead>
+        <tbody id="isiRiwayat"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="pemberitahuan"></div>
+
+<script src="app.js"></script>
+<script src="sync.js"></script>
+<script src="cetak.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      function tampilkan(w) {
+        document.getElementById('pembaruan').style.display = 'block';
+        document.getElementById('btnMuatUlang').onclick = function () { w.postMessage('lewati'); };
+      }
+      if (reg.waiting && navigator.serviceWorker.controller) tampilkan(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        var w = reg.installing;
+        w.addEventListener('statechange', function () {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) tampilkan(w);
+        });
+      });
+      setInterval(function () { reg.update().catch(function(){}); }, 60 * 60 * 1000);
+    }).catch(function () {});
+    var sudah = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (sudah) return; sudah = true; location.reload(); });
+  });
+}
+</script>
+</body>
+</html>
