@@ -1,7 +1,7 @@
 /* Service worker: agar aplikasi bisa dibuka tanpa internet.
  * Naikkan VERSI setiap kali file aplikasi diperbarui. */
-var VERSI = 'logbook-gizi-v1.0.0';
-var FILE = ['./', 'index.html', 'app.js', 'sync.js', 'cetak.js', 'exceljs.min.js',
+var VERSI = 'logbook-gizi-v1.1.0';
+var FILE = ['./', 'index.html', 'app.js', 'sync.js', 'cetak.js', 'capaian.js', 'exceljs.min.js',
   'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', function (e) {

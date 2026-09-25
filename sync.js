@@ -39,7 +39,7 @@ function sinkronSekarang(opsi) {
 
   var kirim = S.catatan.filter(function (c) { return c.kotor; }).map(function (c) {
     var m = cariRA(c.kode);
-    return { id: c.id, kode: c.kode, ra: m ? m.ra : '', tgl: c.tgl, slot: c.slot, rincian: c.rincian, realisasi: c.realisasi, link: c.link, dibuat: c.dibuat, upd: c.upd, del: c.del };
+    return { id: c.id, kode: c.kode, ra: m ? m.ra : '', tgl: c.tgl, slot: c.slot, rincian: c.rincian, realisasi: c.realisasi, link: c.link, output: !!c.output, dibuat: c.dibuat, upd: c.upd, del: c.del };
   });
   var cap = {}; kirim.forEach(function (c) { cap[c.id] = c.upd; });
   var profilKirim = S.profil.kotor ? { nama: S.profil.nama, nip: S.profil.nip, pangkat: S.profil.pangkat, jabatan: S.profil.jabatan, upd: S.profil.upd } : null;

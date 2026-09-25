@@ -4,7 +4,7 @@
  */
 'use strict';
 
-var APP_VERSI = '1.0.0';
+var APP_VERSI = '1.1.0';
 
 var SLOT_ISI = ['08.00-09.00', '09.00-10.00', '10.00-11.00', '11.00-12.00'];
 /* Susunan baris logbook shift pagi (07.00-14.15), mengikuti format Excel Puskesmas */
@@ -102,7 +102,7 @@ function tampilLink(url) {
 var halAktif = 'ra';
 function buka(hal) {
   halAktif = hal;
-  ['ra', 'harian', 'cetak', 'atur'].forEach(function (h) { $('hal-' + h).classList.toggle('sembunyi', h !== hal); });
+  ['ra', 'harian', 'capaian', 'cetak', 'atur'].forEach(function (h) { $('hal-' + h).classList.toggle('sembunyi', h !== hal); });
   Array.prototype.forEach.call(document.querySelectorAll('#menu button'), function (b) { b.classList.toggle('aktif', b.getAttribute('data-hal') === hal); });
   if (hal === 'atur') isiFormAtur();
   segarkan();
@@ -112,6 +112,7 @@ function segarkan() {
   if (halAktif === 'ra') tampilRA();
   if (halAktif === 'harian') tampilHarian();
   if (halAktif === 'cetak') tampilCetak();
+  if (halAktif === 'capaian' && window.tampilCapaian) tampilCapaian();
   if (halAktif === 'atur') tampilAtur();
   if (modalTerbuka()) tampilRiwayat();
   if (window.perbaruiBadge) perbaruiBadge();
@@ -203,7 +204,7 @@ function kosongkanForm(tgl, slot) {
   $('fTgl').max = hariIni();
   $('fTgl').value = tgl;
   isiPilihanSlot(slot);
-  $('fRincian').value = ''; $('fRealisasi').value = ''; $('fLink').value = '';
+  $('fRincian').value = ''; $('fRealisasi').value = ''; $('fLink').value = ''; $('fOutput').checked = false;
   $('tandaEdit').classList.add('sembunyi');
   $('btnSimpan').innerHTML = '💾 Simpan';
   $('judulModal').textContent = 'Tambah Catatan Kegiatan Harian';
@@ -213,7 +214,7 @@ function mulaiEdit(id) {
   M.editId = id;
   if (c.kode !== M.kode) { M.kode = c.kode; if (M.pilihBebas) $('pilihRA').value = c.kode; isiPita(); }
   $('fTgl').value = c.tgl; isiPilihanSlot(c.slot);
-  $('fRincian').value = c.rincian; $('fRealisasi').value = c.realisasi || ''; $('fLink').value = c.link || '';
+  $('fRincian').value = c.rincian; $('fRealisasi').value = c.realisasi || ''; $('fLink').value = c.link || ''; $('fOutput').checked = !!c.output;
   $('tandaEdit').classList.remove('sembunyi');
   $('btnSimpan').innerHTML = '💾 Simpan Perubahan';
   $('judulModal').textContent = 'Ubah Catatan Kegiatan Harian';
@@ -225,7 +226,7 @@ function tampilRiwayat() {
   var d = catatanHidup().filter(function (c) { return c.kode === M.kode; }).sort(urutCatatan);
   if (!d.length) { $('isiRiwayat').innerHTML = '<tr><td colspan="7" class="kosong">Belum ada catatan untuk Rencana Aksi ini.</td></tr>'; return; }
   $('isiRiwayat').innerHTML = d.map(function (c, i) {
-    return '<tr' + (c.id === M.editId ? ' style="background:#fff7e0"' : '') + '><td class="tengah">' + (i + 1) + '.</td><td class="tengah">' + esc(tglSedang(c.tgl)) + '</td><td class="tengah nowrap">' + esc(c.slot) + '</td><td>' + esc(c.rincian) +
+    return '<tr' + (c.id === M.editId ? ' style="background:#fff7e0"' : '') + '><td class="tengah">' + (i + 1) + '.</td><td class="tengah">' + esc(tglSedang(c.tgl)) + '</td><td class="tengah nowrap">' + esc(c.slot) + '</td><td>' + esc(c.rincian) + (c.output ? ' <span class="lencana">Output ✓</span>' : '') +
       '</td><td>' + esc(c.realisasi || '') + '</td><td class="tengah">' + tampilLink(c.link) +
       '</td><td class="tengah nowrap"><button class="ikon-btn edit" data-edit="' + esc(c.id) + '" aria-label="Ubah">✎</button> <button class="ikon-btn hapus" data-hapus="' + esc(c.id) + '" aria-label="Hapus">✖</button></td></tr>';
   }).join('');
@@ -233,18 +234,19 @@ function tampilRiwayat() {
 function simpanForm() {
   if (!M.kode) { beritahu('Pilih Rencana Aksi terlebih dahulu.'); $('pilihRA').focus(); return; }
   var tgl = $('fTgl').value, slot = $('fSlot').value, rincian = $('fRincian').value.trim();
-  var realisasi = $('fRealisasi').value.trim(), link = $('fLink').value.trim();
+  var realisasi = $('fRealisasi').value.trim(), link = $('fLink').value.trim(), output = $('fOutput').checked;
   if (!tgl) { beritahu('Tanggal belum diisi.'); $('fTgl').focus(); return; }
   if (tgl > hariIni()) { beritahu('Tanggal tidak boleh melewati hari ini.'); $('fTgl').focus(); return; }
   if (!slot) { beritahu('Pilih jam kegiatan.'); $('fSlot').focus(); return; }
   if (!rincian) { beritahu('Rincian Kegiatan Harian wajib diisi.'); $('fRincian').focus(); return; }
   if (link && !/^https?:\/\//i.test(link)) { beritahu('Tautan harus diawali https://'); $('fLink').focus(); return; }
+  if (output && !link && !confirm('Output ditandai selesai tetapi Link Bukti kosong.\nBukti dukung di Matrik Realisasi akan kosong untuk bulan ini. Tetap simpan?')) { $('fLink').focus(); return; }
   var waktu = sekarangISO();
   if (M.editId) {
     var c = S.catatan.filter(function (x) { return x.id === M.editId; })[0];
-    if (c) { c.kode = M.kode; c.tgl = tgl; c.slot = slot; c.rincian = rincian; c.realisasi = realisasi; c.link = link; c.upd = waktu; c.kotor = true; }
+    if (c) { c.kode = M.kode; c.tgl = tgl; c.slot = slot; c.rincian = rincian; c.realisasi = realisasi; c.link = link; c.output = output; c.upd = waktu; c.kotor = true; }
   } else {
-    S.catatan.push({ id: buatId(), kode: M.kode, tgl: tgl, slot: slot, rincian: rincian, realisasi: realisasi, link: link, dibuat: waktu, upd: waktu, del: false, kotor: true });
+    S.catatan.push({ id: buatId(), kode: M.kode, tgl: tgl, slot: slot, rincian: rincian, realisasi: realisasi, link: link, output: output, dibuat: waktu, upd: waktu, del: false, kotor: true });
   }
   simpanCatatan();
   beritahu(M.editId ? 'Perubahan tersimpan.' : 'Catatan tersimpan.');
@@ -289,7 +291,7 @@ function tampilHarian() {
     var isi = semua.filter(function (c) { return c.slot === b.jam; });
     var html = isi.length ? isi.map(function (c) {
       var m = cariRA(c.kode);
-      return '<div class="entri"><div class="isi"><div>' + esc(c.rincian) + (c.realisasi ? ' · <b>' + esc(c.realisasi) + '</b>' : '') + '</div>' +
+      return '<div class="entri"><div class="isi"><div>' + esc(c.rincian) + (c.realisasi ? ' · <b>' + esc(c.realisasi) + '</b>' : '') + (c.output ? ' <span class="lencana">Output ✓</span>' : '') + '</div>' +
         '<div class="ra-kecil">' + esc(m ? m.kode + ' · ' + m.ra : c.kode) + '</div>' + (c.link ? '<div>' + tampilLink(c.link) + '</div>' : '') + '</div>' +
         '<button class="ikon-btn edit" data-hedit="' + esc(c.id) + '" aria-label="Ubah">✎</button></div>';
     }).join('') : '<span class="catatan-kecil">— belum ada kegiatan —</span>';
@@ -395,10 +397,10 @@ function gabungCatatan(daftar, tandaiKotor) {
     if (!r || !r.id) return;
     var l = peta[r.id];
     if (!l) {
-      var baru = { id: r.id, kode: r.kode, tgl: r.tgl, slot: r.slot, rincian: r.rincian || '', realisasi: r.realisasi || '', link: r.link || '', dibuat: r.dibuat || r.upd, upd: r.upd, del: !!r.del, kotor: !!tandaiKotor };
+      var baru = { id: r.id, kode: r.kode, tgl: r.tgl, slot: r.slot, rincian: r.rincian || '', realisasi: r.realisasi || '', link: r.link || '', output: !!r.output, dibuat: r.dibuat || r.upd, upd: r.upd, del: !!r.del, kotor: !!tandaiKotor };
       S.catatan.push(baru); peta[r.id] = baru; berubah++;
     } else if ((r.upd || '') > (l.upd || '')) {
-      l.kode = r.kode; l.tgl = r.tgl; l.slot = r.slot; l.rincian = r.rincian || ''; l.realisasi = r.realisasi || ''; l.link = r.link || '';
+      l.kode = r.kode; l.tgl = r.tgl; l.slot = r.slot; l.rincian = r.rincian || ''; l.realisasi = r.realisasi || ''; l.link = r.link || ''; l.output = !!r.output;
       l.dibuat = l.dibuat || r.dibuat; l.upd = r.upd; l.del = !!r.del; l.kotor = !!tandaiKotor; berubah++;
     }
   });
